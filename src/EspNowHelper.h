@@ -1,19 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
+#include <MessageStructs.h>
 #include <WiFi.h>
 #include <esp_now.h>
-
-// Message types
-#define MSG_TYPE_CONNECT 0
-#define MSG_TYPE_STATUS 1
-#define MSG_TYPE_DISCONNECT 2
-
-typedef struct DeviceMessage {
-    uint8_t id;
-    uint8_t messageType;  // MSG_TYPE_CONNECT, MSG_TYPE_STATUS, MSG_TYPE_DISCONNECT
-    bool isCalibrated;
-} DeviceMessage;
 
 class EspNowHelper {
   public:
