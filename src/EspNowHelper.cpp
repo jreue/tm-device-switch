@@ -1,64 +1,43 @@
 #include "EspNowHelper.h"
 
 EspNowHelper::EspNowHelper() : receiverAddress(nullptr) {
-  message.id = 0;
-  message.isCalibrated = false;
+  message.deviceId = 0;
+  message.deviceType = DEVICE_TYPE_MODULE;
 }
 
-void EspNowHelper::begin(uint8_t* hubMacAddress, uint8_t deviceId) {
+void EspNowHelper::begin(uint8_t* hubMacAddress, int moduleId) {
   receiverAddress = hubMacAddress;
-  message.id = deviceId;
-  message.isCalibrated = false;
+  deviceId = moduleId;
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
+  Serial.printf("Device Module MAC Address: %s\n", WiFi.macAddress().c_str());
 
-  // Print MAC Address
-  Serial.println("Device starting with ESP-NOW");
-  Serial.print("Device MAC Address: ");
-  Serial.println(WiFi.macAddress());
-  Serial.print("Device ID: ");
-  Serial.println(deviceId);
+  Serial.printf("Device ID: %d\n", deviceId);
 
-  // Initialize ESP-NOW
+  Serial.println("Initializing ESP-NOW...");
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
 
-  // Register send callback
-  esp_now_register_send_cb(handleDataSent);
+  esp_now_register_send_cb(handleESPNowDataSent);
 
-  // Register peer
+  Serial.println("Adding ESP-NOW Peers...");
   esp_now_peer_info_t peerInfo;
   memset(&peerInfo, 0, sizeof(peerInfo));
   memcpy(peerInfo.peer_addr, hubMacAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
 
-  // Add peer
+  // Add HUB peer
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
+    Serial.println("Failed to add HUB peer");
     return;
   }
 }
 
-void EspNowHelper::sendConnected() {
-  Serial.println("[Device Connected]");
-  message.messageType = MSG_TYPE_CONNECT;
-  sendCalibrationStatus();
-}
-
-void EspNowHelper::updateCalibration(bool newStatus) {
-  if (newStatus != message.isCalibrated) {
-    Serial.println("Calibration status changed...");
-    message.isCalibrated = newStatus;
-    message.messageType = MSG_TYPE_STATUS;
-    sendCalibrationStatus();
-  }
-}
-
-void EspNowHelper::handleDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
+void EspNowHelper::handleESPNowDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
   if (status == ESP_NOW_SEND_SUCCESS) {
     Serial.println("  ✓ Delivery confirmed");
   } else {
@@ -67,12 +46,38 @@ void EspNowHelper::handleDataSent(const uint8_t* mac_addr, esp_now_send_status_t
   Serial.println("------------------------");
 }
 
-void EspNowHelper::sendCalibrationStatus() {
+void EspNowHelper::sendConnected() {
+  Serial.println("Sending Connected Message");
+
+  message.deviceId = deviceId;
+  message.deviceType = DEVICE_TYPE_MODULE;
+  message.messageType = MSG_TYPE_CONNECT;
+
+  sendMessage();
+}
+
+void EspNowHelper::updateCalibration(bool newStatus) {
+  if (newStatus != message.isCalibrated) {
+    Serial.println("Sending Data Message...");
+
+    message.deviceId = deviceId;
+    message.deviceType = DEVICE_TYPE_MODULE;
+    message.messageType = MSG_TYPE_DATA;
+    message.isCalibrated = newStatus;
+
+    sendMessage();
+  }
+}
+
+void EspNowHelper::sendMessage() {
   Serial.println("  → Preparing message:");
   Serial.print("      Device ID: ");
-  Serial.println(message.id);
+  Serial.println(message.deviceId);
+  Serial.print("      Device Type: ");
+  Serial.println(message.deviceType);
   Serial.print("      Message Type: ");
-  Serial.println(MSG_TYPE_STATUS);
+  Serial.println(message.messageType);
+
   Serial.print("      Calibrated: ");
   Serial.println(message.isCalibrated ? "true" : "false");
 
