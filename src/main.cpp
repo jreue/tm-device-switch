@@ -21,7 +21,7 @@ void setup() {
   Serial.begin(115200);
 
   espNowHelper.begin(hubAddress, DEVICE_ID);
-  espNowHelper.sendConnected();
+  espNowHelper.sendModuleConnected();
 
   // Hardware Initialization
   pinMode(SWITCH_PIN, INPUT_PULLUP);
@@ -29,7 +29,7 @@ void setup() {
   lastSwitchState = currentSwitchState;
 
   // Send initial calibration status
-  espNowHelper.updateCalibration(isCalibrated());
+  espNowHelper.sendModuleUpdated(isCalibrated());
 }
 
 void loop() {
@@ -45,7 +45,7 @@ void loop() {
       currentSwitchState = reading;
 
       // Update calibration status
-      espNowHelper.updateCalibration(isCalibrated());
+      espNowHelper.sendModuleUpdated(isCalibrated());
     }
   }
 
