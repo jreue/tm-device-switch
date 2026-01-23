@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <shared_hardware_config.h>
 
 #include "EspNowHelper.h"
 #include "hardware_config.h"
