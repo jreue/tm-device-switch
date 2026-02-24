@@ -13,8 +13,20 @@ bool lastSwitchState = LOW;
 bool currentSwitchState = LOW;
 unsigned long lastDebounceTime = 0;
 
+void updateLEDS() {
+  if (!currentSwitchState) {
+    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
+  } else {
+    digitalWrite(RED_LED_PIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, LOW);
+  }
+}
+
 // Return true if the module is calibrated (switch LOW)
 bool isCalibrated() {
+  updateLEDS();
+
   return !currentSwitchState;
 }
 
@@ -27,8 +39,15 @@ void setup() {
 
   // Hardware Initialization
   pinMode(SWITCH_PIN, INPUT_PULLUP);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+
   currentSwitchState = digitalRead(SWITCH_PIN);
   lastSwitchState = currentSwitchState;
+
+  // Start with both LEDs off
+  digitalWrite(RED_LED_PIN, LOW);
+  digitalWrite(GREEN_LED_PIN, LOW);
 
   // Send initial calibration status
   espNowHelper.sendModuleUpdated(hubAddress, isCalibrated());
