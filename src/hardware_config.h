@@ -3,7 +3,7 @@
 // ====================
 // This Devices Configuration
 // ====================
-#define DEVICE_ID 103
+#define DEVICE_ID 101
 
 // ====================
 // Switch Configuration
